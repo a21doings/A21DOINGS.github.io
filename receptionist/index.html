@@ -3,76 +3,136 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>A21 Receptionist | AI Customer Service</title>
+<title>A21 Receptionist - AI Assistant</title>
 <style>
 body {
 font-family: Arial, sans-serif;
+background: #f1f5f9;
 margin: 0;
-background: #f4f7fb;
 color: #172554;
 }
 header {
 background: #102b50;
 color: white;
-padding: 25px;
 text-align: center;
+padding: 25px;
 }
 .container {
-max-width: 850px;
-margin: 40px auto;
-padding: 25px;
-text-align: center;
+max-width: 600px;
+margin: 30px auto;
+padding: 20px;
+}
+.chat {
+background: white;
+padding: 20px;
+border-radius: 12px;
+box-shadow: 0 3px 12px #ccc;
+}
+#messages {
+height: 300px;
+overflow-y: auto;
+border: 1px solid #ddd;
+padding: 12px;
+margin-bottom: 15px;
+border-radius: 8px;
+}
+input {
+width: 70%;
+padding: 13px;
+border: 1px solid #ccc;
+border-radius: 6px;
 }
 button {
+padding: 13px;
 background: #0878df;
 color: white;
 border: none;
-padding: 14px 25px;
 border-radius: 6px;
-font-size: 16px;
 }
-.card {
-background: white;
-padding: 25px;
-margin: 20px 0;
-border-radius: 10px;
-}
+.bot { color: #0878df; }
+.user { color: #15803d; }
 </style>
 </head>
 <body>
 
 <header>
 <h1>A21 RECEPTIONIST</h1>
-<p>Smart AI Customer Service for Nigerian Businesses</p>
+<p>Your Smart AI Business Assistant</p>
 </header>
 
 <div class="container">
-<h2>Your Business Never Sleeps!</h2>
+<div class="chat">
+<h2>Chat with A21 AI</h2>
+<p>Ask me anything. I'm here to help!</p>
 
-<p>
-A21 Receptionist helps Nigerian businesses
-respond to customers 24 hours a day,
-7 days a week.
-</p>
-
-<div class="card">
-<h2>Meet Your AI Receptionist</h2>
-<p>Automate customer service and never miss an enquiry.</p>
-<button onclick="alert('AI Receptionist coming soon!')">
-Try AI Receptionist
-</button>
+<div id="messages">
+<p class="bot">A21 AI: Hello! Welcome to A21 Receptionist. How can I help you?</p>
 </div>
 
-<div class="card">
-<h2>Our Features</h2>
-<p>24/7 Customer Support</p>
-<p>WhatsApp Automation</p>
-<p>Smart AI Responses</p>
-<p>Business Customer Management</p>
+<input id="message" placeholder="Type your message...">
+<button onclick="sendMessage()">Send</button>
+
+</div>
 </div>
 
-<h2>Powered by A21 Doings</h2>
-</div>
+<script>
+async function sendMessage() {
+const input = document.getElementById("message");
+const messages = document.getElementById("messages");
+const message = input.value.trim();
+
+if (!message) return;
+
+messages.innerHTML +=
+`<p class="user">You: ${escapeHTML(message)}</p>`;
+
+input.value = "";
+
+const loading = document.createElement("p");
+loading.className = "bot";
+loading.textContent = "A21 AI: Thinking...";
+messages.appendChild(loading);
+messages.scrollTop = messages.scrollHeight;
+
+try {
+const response = await fetch(
+"https://a21-receptionist.onrender.com/chat",
+{
+method: "POST",
+headers: {
+"Content-Type": "application/json"
+},
+body: JSON.stringify({ message })
+}
+);
+
+const data = await response.json();
+
+if (!response.ok) {
+throw new Error(data.error || "Request failed");
+}
+
+loading.textContent = "A21 AI: " + data.reply;
+
+} catch (error) {
+loading.textContent =
+"A21 AI: Sorry, connection failed. Please try again.";
+console.error(error);
+}
+
+messages.scrollTop = messages.scrollHeight;
+}
+
+function escapeHTML(text) {
+return text.replace(/[&<>"']/g, char => ({
+"&": "&amp;",
+"<": "&lt;",
+">": "&gt;",
+'"': "&quot;",
+"'": "&#039;"
+})[char]);
+}
+</script>
 
 </body>
 </html>
