@@ -1,25 +1,50 @@
+
 const express = require("express");
 const cors = require("cors");
 const OpenAI = require("openai");
 
 const app = express();
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Log incoming requests
-app.use((req, res, next) => {
-  console.log("Incoming request:", req.method, req.url);
-  next();
-});
+// OpenAI connection (optional)
+const openai = process.env.OPENAI_API_KEY
+  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  : null;
 
-// OpenAI connection
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+// Demo receptionist responses
+function demoReply(message) {
+  const text = message.toLowerCase();
 
-// Test route
+  if (text.includes("hello") || text.includes("hi")) {
+    return "Hello! Welcome to A21 Receptionist AI. How may I assist you today?";
+  }
+
+  if (text.includes("hours") || text.includes("open")) {
+    return "Thank you for contacting us! Please let us know which business hours you would like to confirm.";
+  }
+
+  if (text.includes("price") || text.includes("cost")) {
+    return "Thank you for your interest. Please tell us which service you would like a price for.";
+  }
+
+  if (text.includes("appointment") || text.includes("booking")) {
+    return "I'd be happy to help with an appointment. What date and time would you prefer?";
+  }
+
+  if (text.includes("location") || text.includes("address")) {
+    return "Please let us know which branch or location you would like information about.";
+  }
+
+  if (text.includes("thank")) {
+    return "You're welcome! Thank you for contacting A21. Have a wonderful day!";
+  }
+
+  return "Thank you for contacting A21 Receptionist AI. I'm currently operating in free demo mode. Please tell me more about how I can help you.";
+}
+
+// Home route
 app.get("/", (req, res) => {
   res.send("A21 Receptionist AI Server is running!");
 });
@@ -28,9 +53,17 @@ app.get("/", (req, res) => {
 app.post("/chat", async (req, res) => {
   const { message } = req.body;
 
-  if (!message) {
+  if (!message || typeof message !== "string") {
     return res.status(400).json({
       error: "Please enter a message."
+    });
+  }
+
+  // Free demo mode
+  if (process.env.DEMO_MODE === "true" || !openai) {
+    return res.json({
+      reply: demoReply(message),
+      mode: "demo"
     });
   }
 
@@ -46,14 +79,17 @@ app.post("/chat", async (req, res) => {
     });
 
     res.json({
-      reply: response.choices[0].message.content
+      reply: response.choices[0].message.content,
+      mode: "ai"
     });
 
   } catch (error) {
     console.error("OpenAI Error:", error);
 
-    res.status(500).json({
-      error: "Sorry, something went wrong. Please try again."
+    // Use demo responses if OpenAI is unavailable
+    res.json({
+      reply: demoReply(message),
+      mode: "demo"
     });
   }
 });
